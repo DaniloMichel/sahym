@@ -1,98 +1,162 @@
-# Guía de Despliegue — SAHYM en Render.com
+# Guía de Despliegue SAHYM
+## Supabase (base de datos) + Streamlit Community Cloud (app)
+## 100% gratis · Sin tarjeta de crédito
 
-## Archivos que necesitas en tu carpeta del proyecto
+---
+
+## Resumen del plan
 
 ```
-sahym/
-├── app.py
-├── database.py
-├── logic.py
-├── requirements.txt
-└── render.yaml
+GitHub (tu código)
+    ↓
+Streamlit Community Cloud (corre la app)
+    ↓
+Supabase (base de datos PostgreSQL)
 ```
 
 ---
 
-## Paso 1 — Crear cuenta en GitHub (si no tienes)
+## PARTE 1 — Supabase (base de datos)
 
-1. Ve a https://github.com y crea una cuenta gratuita.
-2. Crea un repositorio nuevo llamado `sahym` (privado recomendado).
-3. Sube todos tus archivos a ese repositorio.
+### Paso 1 — Crear cuenta
+1. Ve a https://supabase.com
+2. Haz clic en **Start your project**
+3. Regístrate con GitHub o con tu correo (no pide tarjeta)
 
-Desde tu computadora con Git instalado:
+### Paso 2 — Crear proyecto
+1. Haz clic en **New Project**
+2. Ponle nombre: `sahym`
+3. Crea una contraseña para la base de datos — **guárdala**, la necesitarás
+4. Elige la región más cercana (por ejemplo `us-east-1`)
+5. Haz clic en **Create new project** y espera ~2 minutos
+
+### Paso 3 — Obtener la cadena de conexión
+1. En el menú izquierdo ve a **Project Settings → Database**
+2. Baja hasta la sección **Connection string**
+3. Selecciona el modo **Transaction** en el selector
+4. Copia la URL — se ve así:
+   ```
+   postgresql://postgres.xxxx:TU_PASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres
+   ```
+5. Reemplaza `[YOUR-PASSWORD]` con la contraseña que creaste en el Paso 2
+6. **Guarda esta URL**, la usarás en los siguientes pasos
+
+---
+
+## PARTE 2 — GitHub (actualizar tu repositorio)
+
+### Paso 4 — Agregar nuevos archivos al repo
+
+Tienes que agregar estos archivos nuevos a tu repositorio:
+- `database.py` (versión actualizada)
+- `logic.py` (versión actualizada)
+- `requirements.txt`
+
+Y crear esta carpeta y archivo (NO se sube a GitHub):
+```
+.streamlit/
+└── secrets.toml     ← este NO va al repo
+```
+
+### Paso 5 — Crear el .gitignore
+Crea un archivo llamado `.gitignore` en tu carpeta con este contenido:
+```
+.streamlit/secrets.toml
+__pycache__/
+*.pyc
+tienda.db
+backups/
+fotos_productos/
+```
+
+### Paso 6 — Subir cambios a GitHub
 ```bash
-cd tu-carpeta-sahym
-git init
 git add .
-git commit -m "primera version"
-git remote add origin https://github.com/TU_USUARIO/sahym.git
-git push -u origin main
+git commit -m "preparar para despliegue en streamlit cloud"
+git push
 ```
 
 ---
 
-## Paso 2 — Crear cuenta en Render
+## PARTE 3 — Streamlit Community Cloud (la app)
 
-1. Ve a https://render.com
-2. Haz clic en **Get Started for Free**
-3. Regístrate con tu cuenta de GitHub (es la opción más fácil)
+### Paso 7 — Crear cuenta
+1. Ve a https://share.streamlit.io
+2. Haz clic en **Sign up**
+3. Regístrate con tu cuenta de GitHub (no pide tarjeta)
 
----
+### Paso 8 — Desplegar la app
+1. Haz clic en **New app**
+2. Selecciona tu repositorio `sahym`
+3. En **Branch** pon: `main`
+4. En **Main file path** pon: `app.py`
+5. Haz clic en **Advanced settings...**
 
-## Paso 3 — Desplegar con render.yaml (automático)
+### Paso 9 — Configurar el secreto de la base de datos
+En la ventana de **Advanced settings** verás un campo llamado **Secrets**.
+Pega esto (con tu URL real de Supabase):
 
-1. En Render, haz clic en **New → Blueprint**
-2. Conecta tu repositorio `sahym` de GitHub
-3. Render detectará el archivo `render.yaml` automáticamente
-4. Haz clic en **Apply** — Render creará:
-   - Un servicio web para SAHYM
-   - Una base de datos PostgreSQL gratuita
-   - La variable DATABASE_URL conectada automáticamente
+```toml
+DATABASE_URL = "postgresql://postgres.TUPROYECTO:TUPASSWORD@aws-0-us-east-1.pooler.supabase.com:5432/postgres"
+```
 
----
+6. Haz clic en **Save**
+7. Haz clic en **Deploy!**
 
-## Paso 4 — Esperar el despliegue
-
-- El primer despliegue tarda 3-5 minutos
-- Render te dará una URL tipo: `https://sahym.onrender.com`
-- Esa URL es la que compartes con tus empleados
-
----
-
-## Paso 5 — Primera vez que abres la app
-
-- Usuario: **admin**
-- Contraseña: **admin123**
-- ¡Cámbiala inmediatamente en la pestaña Usuarios!
+### Paso 10 — Esperar el despliegue
+- Tarda 2-4 minutos la primera vez
+- Streamlit Cloud te dará una URL tipo:
+  `https://sahym-xxxxxx.streamlit.app`
+- ¡Esa es la URL que compartes con tus empleados!
 
 ---
 
-## Notas importantes
+## PARTE 4 — Primera vez que abres la app
 
-### Plan gratuito de Render
-- La app se "duerme" después de 15 minutos sin uso
-- Al primer acceso tarda ~30 segundos en despertar
-- Para evitar esto: plan Starter ($7/mes)
+1. Abre tu URL de Streamlit Cloud
+2. Inicia sesión con:
+   - Usuario: **admin**
+   - Contraseña: **admin123**
+3. Ve a la pestaña **Usuarios** y cambia la contraseña inmediatamente
 
-### Base de datos gratuita
-- PostgreSQL gratis por 90 días en Render
-- Después hay que pagar $7/mes o migrar a otro proveedor
-- Alternativa gratuita permanente: Supabase.com (PostgreSQL gratis)
+---
 
-### Actualizar la app
-Cada vez que hagas cambios en tu código:
+## Límites del plan gratuito
+
+| Servicio | Límite gratuito |
+|---|---|
+| Streamlit Cloud | 1 app, sin límite de tiempo |
+| Supabase | 500 MB de base de datos, sin límite de tiempo |
+| Supabase | 2 GB de transferencia al mes |
+
+Para una tienda pequeña estos límites son más que suficientes.
+
+---
+
+## Actualizar la app después de hacer cambios
+
+Cada vez que modifiques el código en tu computadora:
 ```bash
 git add .
 git commit -m "descripcion del cambio"
 git push
 ```
-Render detecta el push y actualiza la app automáticamente.
+Streamlit Cloud detecta el cambio y actualiza la app automáticamente
+en 1-2 minutos.
 
 ---
 
 ## Si algo falla
 
-Render tiene un log de errores en tiempo real:
-1. Ve a tu servicio en Render
-2. Haz clic en **Logs**
-3. Copia el error y compártelo para resolverlo
+### Ver los logs de error
+1. Ve a https://share.streamlit.io
+2. Haz clic en los tres puntos (...) de tu app
+3. Selecciona **Logs**
+4. Copia el error y compártelo para resolverlo
+
+### Errores comunes
+| Error | Causa | Solución |
+|---|---|---|
+| `connection refused` | URL de Supabase incorrecta | Revisa el secreto DATABASE_URL |
+| `ModuleNotFoundError` | Falta librería | Verifica requirements.txt |
+| `relation does not exist` | Tablas no creadas | La app las crea sola al arrancar |
