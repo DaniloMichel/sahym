@@ -127,12 +127,15 @@ def registrar_producto(nombre, marca, categoria, codigo, talla, color,
     try:
         with conectar_db() as conn:
             c = conn.cursor()
-            c.execute(
-                f"INSERT INTO productos (nombre, marca, categoria) "
-                f"VALUES ({PH},{PH},{PH}) "
-                f"{'ON CONFLICT DO NOTHING' if USE_PG else 'OR IGNORE'}",
-                (nombre, marca, categoria),
-            )
+            # SQLite: INSERT OR IGNORE INTO ...
+            # PostgreSQL: INSERT INTO ... ON CONFLICT DO NOTHING
+            if USE_PG:
+                sql_ins = (f"INSERT INTO productos (nombre, marca, categoria) "
+                           f"VALUES ({PH},{PH},{PH}) ON CONFLICT DO NOTHING")
+            else:
+                sql_ins = (f"INSERT OR IGNORE INTO productos (nombre, marca, categoria) "
+                           f"VALUES ({PH},{PH},{PH})")
+            c.execute(sql_ins, (nombre, marca, categoria))
             c.execute(f"SELECT id FROM productos WHERE nombre={PH}", (nombre,))
             pid = c.fetchone()[0]
             c.execute(
